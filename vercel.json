@@ -6,9 +6,6 @@
             "use": "@vercel/node"
         }
     ],
-    "static": {
-    "directory": "assets"
-    },
     "routes": [
         {
             "src": "/(.*)",
