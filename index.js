@@ -11,6 +11,7 @@ const app = express();
 const FONT_BASE_URL = 'https://raw.githubusercontent.com/rizskie772/qris-dinamis/main/assets/font/';
 const TEMPLATE_URL = 'https://raw.githubusercontent.com/rizskie772/qris-dinamis/main/assets/template.png';
 
+// Fungsi untuk mendownload file dari URL dan mengembalikan buffer
 async function downloadFile(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     return Buffer.from(response.data, 'binary');
