@@ -6,6 +6,8 @@ const { pad, toCRC16, dataQris } = require('./lib');
 
 const app = express();
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/generate-qris', async (req, res) => {
     const { qris, nominal, taxtype, fee } = req.query;
 
