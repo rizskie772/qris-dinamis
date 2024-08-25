@@ -1,6 +1,7 @@
 const express = require('express');
 const QRCode = require('qrcode');
 const Jimp = require('jimp');
+const path = require('path')
 const { pad, toCRC16, dataQris } = require('./lib');
 
 const app = express();
@@ -30,7 +31,7 @@ app.get('/generate-qris', async (req, res) => {
         const data = dataQris(qris);
         const text = data.merchantName;
         const qr = await Jimp.read(qrBuffer);
-        const image = await Jimp.read('assets/template.png');
+        const image = await Jimp.read(path.join(__dirname,'assets/template.png'));
 
         const w = image.bitmap.width;
         const h = image.bitmap.height;
