@@ -63,3 +63,5 @@ app.get('/generate-qr', async (req, res) => {
         res.status(500).send('An error occurred while generating the QR code.');
     }
 });
+
+module.exports = app;
