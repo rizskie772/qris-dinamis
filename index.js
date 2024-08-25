@@ -61,9 +61,9 @@ app.get('/generate-qr', async (req, res) => {
         let fontNmidBuffer = await downloadFile(fontNmidUrl);
         let fontCetakBuffer = await downloadFile(fontCetakUrl);
 
-        let fontTitle = await Jimp.loadFont(fontTitleBuffer);
-        let fontNmid = await Jimp.loadFont(fontNmidBuffer);
-        let fontCetak = await Jimp.loadFont(fontCetakBuffer);
+        let fontTitle = await Jimp.loadFont(fontTitleBuffer.toString());
+        let fontNmid = await Jimp.loadFont(fontNmidBuffer.toString());
+        let fontCetak = await Jimp.loadFont(fontCetakBuffer.toString());
 
         // Edit the template with QR code and text
         image
