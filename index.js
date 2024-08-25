@@ -35,9 +35,9 @@ app.get('/generate-qris', async (req, res) => {
 
         const w = image.bitmap.width;
         const h = image.bitmap.height;
-        const fonttitle = await Jimp.loadFont((text.length > 18) ? 'assets/font/BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'assets/font/BebasNeue/BebasNeue-Regular.ttf.fnt');
-        const fontnmid = await Jimp.loadFont((text.length > 28) ? 'assets/font/RobotoSedang/Roboto-Regular.ttf.fnt' : 'assets/font/RobotoBesar/Roboto-Regular.ttf.fnt');
-        const fontcetak = await Jimp.loadFont('assets/font/RobotoKecil/Roboto-Regular.ttf.fnt');
+        const fonttitle = await Jimp.loadFont(path.join(__dirname, (text.length > 18) ? 'assets/font/BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'assets/font/BebasNeue/BebasNeue-Regular.ttf.fnt'));
+        const fontnmid = await Jimp.loadFont(path.join(__dirname, (text.length > 28) ? 'assets/font/RobotoSedang/Roboto-Regular.ttf.fnt' : 'assets/font/RobotoBesar/Roboto-Regular.ttf.fnt'));
+        const fontcetak = await Jimp.loadFont(path.join(__dirname, 'assets/font/RobotoKecil/Roboto-Regular.ttf.fnt'));
 
         image
             .composite(qr, w / 4 - 30, h / 4 + 68)
