@@ -9,7 +9,7 @@ const app = express();
 
 // URL file font dan template di GitHub
 const FONT_BASE_URL = 'https://raw.githubusercontent.com/rizskie722/qris-dinamis/main/assets/font/';
-const TEMPLATE_URL = 'https://raw.githubusercontent.com/rizskie722/qris-dinamis/main/assets/template.png';
+const TEMPLATE_URL = 'https://raw.githubusercontent.com/rizskie772/qris-dinamis/main/assets/template.png';
 
 async function downloadFile(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
