@@ -1,5 +1,5 @@
 const express = require('express');
-const path= require('path')
+const path = require('path');
 const QRCode = require('qrcode');
 const Jimp = require('jimp');
 const { pad, toCRC16, dataQris } = require('./lib');
@@ -35,14 +35,19 @@ app.get('/generate-qr', async (req, res) => {
         let data = dataQris(qris);
         var text = data.merchantName;
         let qr = await Jimp.read(qrBuffer);
-        let image = await Jimp.read(path.join(__dirname, 'assets/template.png'));
+        let templatePath = path.join(__dirname, 'assets/template.png');
+        let image = await Jimp.read(templatePath);
 
         var w = image.bitmap.width;
         var h = image.bitmap.height;
 
-        let fontTitle = await Jimp.loadFont(path.join(__dirname, (text.length > 18) ? 'assets/font/BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'assets/font/BebasNeue/BebasNeue-Regular.ttf.fnt'));
-        let fontNmid = await Jimp.loadFont(path.join(__dirname, (text.length > 28) ? 'assets/font/RobotoSedang/Roboto-Regular.ttf.fnt' : 'assets/font/RobotoBesar/Roboto-Regular.ttf.fnt'));
-        let fontCetak = await Jimp.loadFont(path.join(__dirname, 'assets/font/RobotoKecil/Roboto-Regular.ttf.fnt'));
+        let fontTitlePath = path.join(__dirname, (text.length > 18) ? 'assets/font/BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'assets/font/BebasNeue/BebasNeue-Regular.ttf.fnt');
+        let fontNmidPath = path.join(__dirname, (text.length > 28) ? 'assets/font/RobotoSedang/Roboto-Regular.ttf.fnt' : 'assets/font/RobotoBesar/Roboto-Regular.ttf.fnt');
+        let fontCetakPath = path.join(__dirname, 'assets/font/RobotoKecil/Roboto-Regular.ttf.fnt');
+
+        let fontTitle = await Jimp.loadFont(fontTitlePath);
+        let fontNmid = await Jimp.loadFont(fontNmidPath);
+        let fontCetak = await Jimp.loadFont(fontCetakPath);
 
         // Edit the template with QR code and text
         image
