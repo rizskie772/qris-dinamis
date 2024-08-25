@@ -1,89 +1,66 @@
 const express = require('express');
-const axios = require('axios');
-const Jimp = require('jimp');
 const QRCode = require('qrcode');
+const Jimp = require('jimp');
 const { pad, toCRC16, dataQris } = require('./lib');
-const path = require('path');
 
 const app = express();
 
-// URL file font dan template di GitHub
-const FONT_BASE_URL = 'https://raw.githubusercontent.com/rizskie772/qris-dinamis/main/assets/font/';
-const TEMPLATE_URL = 'https://raw.githubusercontent.com/rizskie772/qris-dinamis/main/assets/template.png';
+app.get('/generate-qris', async (req, res) => {
+    const { qris, nominal, taxtype, fee } = req.query;
 
-// Fungsi untuk mendownload file dari URL dan mengembalikan buffer
-async function downloadFile(url) {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    return Buffer.from(response.data, 'binary');
-}
+    if (!qris || !nominal || !taxtype || !fee) {
+        return res.status(400).send('All parameters (qris, nominal, taxtype, fee) are required');
+    }
 
-app.get('/generate-qr', async (req, res) => {
+    let tax = '';
+    let qris2 = qris.slice(0, -4);
+    let replaceQris = qris2.replace("010211", "010212");
+    let pecahQris = replaceQris.split("5802ID");
+    let uang = "54" + pad(nominal.length) + nominal;
+    tax = (taxtype === 'p') ? "55020357" + pad(fee.length) + fee : "55020256" + pad(fee.length) + fee;
+    uang += (tax.length === 0) ? "5802ID" : tax + "5802ID";
+
+    let output = pecahQris[0].trim() + uang + pecahQris[1].trim();
+    output += toCRC16(output);
+
     try {
-        let qris = req.query.qris;
-        let nominal = req.query.nominal;
-        let taxtype = req.query.taxtype || 'p';
-        let fee = req.query.fee || '10';
-
-        if (!qris || !nominal) {
-            return res.status(400).send('Parameter qris dan nominal diperlukan');
-        }
-
-        // Generate the QR code data string
-        let qris2 = qris.slice(0, -4);
-        let replaceQris = qris2.replace("010211", "010212");
-        let pecahQris = replaceQris.split("5802ID");
-        let uang = "54" + pad(nominal.length) + nominal;
-        let tax = (taxtype === 'p') ? "55020357" + pad(fee.length) + fee : "55020256" + pad(fee.length) + fee;
-        uang += (tax.length === 0) ? "5802ID" : tax + "5802ID";
-
-        let output = pecahQris[0].trim() + uang + pecahQris[1].trim();
-        output += toCRC16(output);
-
-        // Generate QR code buffer
+        // Generate QR code
         const qrBuffer = await QRCode.toBuffer(output, { margin: 2, scale: 10 });
 
-        // Load QR code and template image from GitHub
-        let data = dataQris(qris);
-        var text = data.merchantName;
-        let qr = await Jimp.read(qrBuffer);
-        let templateBuffer = await downloadFile(TEMPLATE_URL);
-        let image = await Jimp.read(templateBuffer);
+        const data = dataQris(qris);
+        const text = data.merchantName;
+        const qr = await Jimp.read(qrBuffer);
+        const image = await Jimp.read('assets/template.png');
 
-        var w = image.bitmap.width;
-        var h = image.bitmap.height;
+        const w = image.bitmap.width;
+        const h = image.bitmap.height;
+        const fonttitle = await Jimp.loadFont((text.length > 18) ? 'assets/font/BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'assets/font/BebasNeue/BebasNeue-Regular.ttf.fnt');
+        const fontnmid = await Jimp.loadFont((text.length > 28) ? 'assets/font/RobotoSedang/Roboto-Regular.ttf.fnt' : 'assets/font/RobotoBesar/Roboto-Regular.ttf.fnt');
+        const fontcetak = await Jimp.loadFont('assets/font/RobotoKecil/Roboto-Regular.ttf.fnt');
 
-        // Load font from GitHub
-        let fontTitleUrl = `${FONT_BASE_URL}${(text.length > 18) ? 'BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'BebasNeue/BebasNeue-Regular.ttf.fnt'}`;
-        let fontNmidUrl = `${FONT_BASE_URL}${(text.length > 28) ? 'RobotoSedang/Roboto-Regular.ttf.fnt' : 'RobotoBesar/Roboto-Regular.ttf.fnt'}`;
-        let fontCetakUrl = `${FONT_BASE_URL}RobotoKecil/Roboto-Regular.ttf.fnt`;
-
-        let fontTitleBuffer = await downloadFile(fontTitleUrl);
-        let fontNmidBuffer = await downloadFile(fontNmidUrl);
-        let fontCetakBuffer = await downloadFile(fontCetakUrl);
-
-        let fontTitle = await Jimp.loadFont(fontTitleBuffer.toString());
-        let fontNmid = await Jimp.loadFont(fontNmidBuffer.toString());
-        let fontCetak = await Jimp.loadFont(fontCetakBuffer.toString());
-
-        // Edit the template with QR code and text
         image
             .composite(qr, w / 4 - 30, h / 4 + 68)
-            .print(fontTitle, w / 5 - 30, h / 5 + 68, { text: text, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE }, w / 1.5, (text.length > 28) ? -180 : -210)
-            .print(fontNmid, w / 5 - 30, h / 5 + 68, { text: `NMID : ${data.nmid}`, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE }, w / 1.5, (text.length > 28) ? +20 : -45)
-            .print(fontNmid, w / 5 - 30, h / 5 + 68, { text: data.id, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE }, w / 1.5, (text.length > 28) ? +110 : +90)
-            .print(fontCetak, w / 20, 1205, `Dicetak oleh: ${data.nns}`);
+            .print(fonttitle, w / 5 - 30, h / 5 + 68, { text: text, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE }, w / 1.5, (text.length > 28) ? -180 : -210)
+            .print(fontnmid, w / 5 - 30, h / 5 + 68, { text: `NMID : ${data.nmid}`, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE }, w / 1.5, (text.length > 28) ? +20 : -45)
+            .print(fontnmid, w / 5 - 30, h / 5 + 68, { text: data.id, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE }, w / 1.5, (text.length > 28) ? +110 : +90)
+            .print(fontcetak, w / 20, 1205, `Dicetak oleh: ${data.nns}`);
 
-        // Get the final image as a buffer
-        const finalBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-
-        // Send the generated image as a response
-        res.set('Content-Type', 'image/jpeg');
-        res.send(finalBuffer);
+        // Convert image to buffer and return as response
+        image.getBuffer(Jimp.MIME_JPEG, (err, buffer) => {
+            if (err) return res.status(500).send('An error occurred while generating the image');
+            res.set('Content-Type', Jimp.MIME_JPEG);
+            res.send(buffer);
+        });
 
     } catch (error) {
         console.error(error);
-        res.status(500).send('An error occurred while generating the QR code.');
+        res.status(500).send('An error occurred while generating the QR code');
     }
+});
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
 
 module.exports = app;
