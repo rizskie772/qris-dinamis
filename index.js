@@ -1,10 +1,20 @@
 const express = require('express');
-const path = require('path');
-const QRCode = require('qrcode');
+const axios = require('axios');
 const Jimp = require('jimp');
+const QRCode = require('qrcode');
 const { pad, toCRC16, dataQris } = require('./lib');
+const path = require('path');
 
 const app = express();
+
+// URL file font dan template di GitHub
+const FONT_BASE_URL = 'https://raw.githubusercontent.com/rizskie722/qris-dinamis/main/assets/font/';
+const TEMPLATE_URL = 'https://raw.githubusercontent.com/rizskie722/qris-dinamis/main/assets/template.png';
+
+async function downloadFile(url) {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    return Buffer.from(response.data, 'binary');
+}
 
 app.get('/generate-qr', async (req, res) => {
     try {
@@ -31,23 +41,28 @@ app.get('/generate-qr', async (req, res) => {
         // Generate QR code buffer
         const qrBuffer = await QRCode.toBuffer(output, { margin: 2, scale: 10 });
 
-        // Load QR code and template image from buffer
+        // Load QR code and template image from GitHub
         let data = dataQris(qris);
         var text = data.merchantName;
         let qr = await Jimp.read(qrBuffer);
-        let templatePath = path.join(__dirname, 'assets/template.png');
-        let image = await Jimp.read(templatePath);
+        let templateBuffer = await downloadFile(TEMPLATE_URL);
+        let image = await Jimp.read(templateBuffer);
 
         var w = image.bitmap.width;
         var h = image.bitmap.height;
 
-        let fontTitlePath = path.join(__dirname, (text.length > 18) ? 'assets/font/BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'assets/font/BebasNeue/BebasNeue-Regular.ttf.fnt');
-        let fontNmidPath = path.join(__dirname, (text.length > 28) ? 'assets/font/RobotoSedang/Roboto-Regular.ttf.fnt' : 'assets/font/RobotoBesar/Roboto-Regular.ttf.fnt');
-        let fontCetakPath = path.join(__dirname, 'assets/font/RobotoKecil/Roboto-Regular.ttf.fnt');
+        // Load font from GitHub
+        let fontTitleUrl = `${FONT_BASE_URL}${(text.length > 18) ? 'BebasNeueSedang/BebasNeue-Regular.ttf.fnt' : 'BebasNeue/BebasNeue-Regular.ttf.fnt'}`;
+        let fontNmidUrl = `${FONT_BASE_URL}${(text.length > 28) ? 'RobotoSedang/Roboto-Regular.ttf.fnt' : 'RobotoBesar/Roboto-Regular.ttf.fnt'}`;
+        let fontCetakUrl = `${FONT_BASE_URL}RobotoKecil/Roboto-Regular.ttf.fnt`;
 
-        let fontTitle = await Jimp.loadFont(fontTitlePath);
-        let fontNmid = await Jimp.loadFont(fontNmidPath);
-        let fontCetak = await Jimp.loadFont(fontCetakPath);
+        let fontTitleBuffer = await downloadFile(fontTitleUrl);
+        let fontNmidBuffer = await downloadFile(fontNmidUrl);
+        let fontCetakBuffer = await downloadFile(fontCetakUrl);
+
+        let fontTitle = await Jimp.loadFont(fontTitleBuffer);
+        let fontNmid = await Jimp.loadFont(fontNmidBuffer);
+        let fontCetak = await Jimp.loadFont(fontCetakBuffer);
 
         // Edit the template with QR code and text
         image
