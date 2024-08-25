@@ -1,4 +1,5 @@
 const express = require('express');
+const path= require('path')
 const QRCode = require('qrcode');
 const Jimp = require('jimp');
 const { pad, toCRC16, dataQris } = require('./lib');
